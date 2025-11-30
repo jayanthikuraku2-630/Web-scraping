@@ -1,1 +1,61 @@
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+def get_weather(city):
+    # Convert "new delhi" → "new-delhi"
+    city_url = city.lower().replace(" ", "-")
+    url = f"https://www.timeanddate.com/weather/india/{city_url}"
+
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    # Extract temperature
+    temp_tag = soup.find("div", class_="h2")
+    temperature = temp_tag.text.strip() if temp_tag else "Not found"
+
+    # Extract weather condition
+    condition_tag = soup.find("p", class_="wt-desc")
+    condition = condition_tag.text.strip() if condition_tag else "Not found"
+
+    # Extract humidity
+    humidity_label = soup.find("th", string="Humidity")
+    if humidity_label:
+        humidity = humidity_label.find_next("td").text.strip()
+    else:
+        humidity = "Not found"
+
+    return temperature, humidity, condition
+
+
+# --------------------------
+# MAIN PROGRAM
+# --------------------------
+
+city = input("Enter city name: ")
+
+temperature, humidity, condition = get_weather(city)
+
+print("\n------ WEATHER REPORT ------")
+print("City:", city.title())
+print("Temperature:", temperature)
+print("Humidity:", humidity)
+print("Condition:", condition)
+
+# Save to CSV + Excel
+data = {
+    "City": [city.title()],
+    "Temperature": [temperature],
+    "Humidity": [humidity],
+    "Condition": [condition]
+}
+
+df = pd.DataFrame(data)
+
+df.to_csv("weather_data.csv", index=False)
+df.to_excel("weather_data.xlsx", index=False)
+
+print("\nData saved to:")
+print("➡ weather_data.csv")
+print("➡ weather_data.xlsx")
 
